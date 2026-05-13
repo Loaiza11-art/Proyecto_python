@@ -29,13 +29,13 @@ async def crear_cliente(datos_cliente:ClienteCrear):
     return cliente_val
 
 
-@app.put("/clientes")
-def editar_cliente(id:int, datos_cliente:ClienteEditar):
+@app.put("/clientes/{id}")
+def editar_cliente(id: int, datos_cliente:ClienteEditar):
     for i, obj_cliente in enumerate(lista_clientes):
         if obj_cliente.id == id:
-            cliente_val=Cliente.model_validate(datos_cliente.model_dump())
-            cliente_val.id=id
-            lista_clientes[i]=cliente_val
+            cliente_val= Cliente.model_validate(datos_cliente.model_dump())
+            cliente_val.id = id
+            lista_clientes[i] = cliente_val
             
         return {"MENSAJE": "Se edito el cliente satisfactoriamente", "Cliente": cliente_val}
 
@@ -44,4 +44,4 @@ def eliminar_cliente(id:int, datos_cliente:ClienteEliminar):
     for i, obj_cliente in enumerate(lista_clientes):
         if obj_cliente.id == id:
             lista_clientes.pop(i)
-    return {"Cliente": "Cliente eliminado"}
+    return {"Cliente": "Cliente eliminado","cliente":obj_cliente}
