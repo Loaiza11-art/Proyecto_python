@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException
 from modelos.clientes import Cliente, ClienteCrear, ClienteEditar, ClienteEliminar
 from modelos.factura import Factura, FacturaCrear, FacturaEditar, FacturaBase
 from modelos.Transacciones import Transacciones, TransaccionesCrear, TransaccionesEditar, TransaccionesaBase
-app= FastApi()
+app= FastAPI()
 
 #Lista de clientes en BD
 lista_clientes:list[Cliente] = []
