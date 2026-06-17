@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException
 from modelos.clientes import Cliente, ClienteCrear, ClienteEditar, ClienteEliminar
 from modelos.factura import Factura, FacturaCrear, FacturaEditar, FacturaBase
 from modelos.Transacciones import Transacciones, TransaccionesCrear, TransaccionesEditar, TransaccionesaBase
-app= FastAPI()
+app= FastApi()
 
 #Lista de clientes en BD
 lista_clientes:list[Cliente] = []
@@ -61,7 +61,7 @@ def crear_factura(cliente_id: int ,datos_factura: FacturaCrear):
     cliente_encontrado = [c for c in lista_clientes if c.id == cliente_id]
     
     if not cliente_encontrado:
-        raise HTTPException(satus_code=404, detail=f"Cliente con id {cliente_id} no existe, debes crear.")
+        raise fastapi.HTTPException(satus_code=404, detail=f"Cliente con id {cliente_id} no existe, debes crear.")
 
 #crear la factura
     factura_val = Factura.model_validate(datos_factura.model_dump())
@@ -90,7 +90,7 @@ async def creartransaccion(
     
     #excepciones
     if not cliente_encontrado:
-        raise HTTPException(status_code=400,
+        raise fastapi.HTTPException(status_code=400,
                             detail=f"Error 400: No esiste in cliente con ese id: {cliente_id}, debes de crear un cliente.")
     #Consultar la factura
     factira_encontrada= None

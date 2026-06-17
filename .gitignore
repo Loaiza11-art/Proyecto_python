@@ -1,0 +1,4 @@
+#No incluir archivo de entorno virtual
+mi_env/
+
+__pycache__/
