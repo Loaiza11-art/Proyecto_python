@@ -61,7 +61,7 @@ def crear_factura(cliente_id: int ,datos_factura: FacturaCrear):
     cliente_encontrado = [c for c in lista_clientes if c.id == cliente_id]
     
     if not cliente_encontrado:
-        raise fastapi.HTTPException(satus_code=404, detail=f"Cliente con id {cliente_id} no existe, debes crear.")
+        raise FastAPI.HTTPException(satus_code=404, detail=f"Cliente con id {cliente_id} no existe, debes crear.")
 
 #crear la factura
     factura_val = Factura.model_validate(datos_factura.model_dump())
@@ -74,6 +74,13 @@ def crear_factura(cliente_id: int ,datos_factura: FacturaCrear):
 @app.get("/transacciones", response_model=list[Transacciones])
 async def listar_transacciones():
     return lista_transacciones
+
+@app.get("/transacciones/{id}", response_model=Transacciones)
+def obtener_transaccion(id: int):
+    for transaccion in lista_transacciones:
+        if transaccion.id == id:
+            return transaccion
+    raise HTTPException(status_code=404, detail="Transacción no encontrada")
 
 @app.post("/transacciones/{factura.id}")
 async def creartransaccion(
@@ -90,7 +97,7 @@ async def creartransaccion(
     
     #excepciones
     if not cliente_encontrado:
-        raise fastapi.HTTPException(status_code=400,
+        raise FastAPI.HTTPException(status_code=400,
                             detail=f"Error 400: No esiste in cliente con ese id: {cliente_id}, debes de crear un cliente.")
     #Consultar la factura
     factira_encontrada= None
@@ -139,3 +146,53 @@ async def creartransaccion(
         lista_transacciones.append(transaccion_val)
 
         return {"mensaje": f"Factura no existe con el id:{factura_id}, pero se creo la nueva factura, Factura: {factura_val.id}" }
+    
+    
+@app.put("/transacciones/{id}")
+def editar_transaccion(id: int, datos_transaccion: TransaccionesEditar):
+    transaccion_editada = None
+    
+    for indice, transaccion in enumerate(lista_transacciones):
+        if transaccion.id == id:
+            transaccion_editada = Transacciones.model_validate(datos_transaccion.model_dump())
+            transaccion_editada.id = id
+            transaccion_editada.factura_id = transaccion.factura_id
+            
+            lista_transacciones[indice] = transaccion_editada
+            break
+            
+    if not transaccion_editada:
+        raise HTTPException(status_code=404, detail="Transacción no encontrada para editar")
+    for factura in lista_facturas:
+        if factura.id == transaccion_editada.factura_id:
+            for indice_t, t_factura in enumerate(factura.transacciones):
+                if t_factura.id == id:
+                    factura.transacciones[indice_t] = transaccion_editada
+                    break
+            break
+
+    return {"mensaje": "Transacción editada correctamente", "transaccion": transaccion_editada}
+
+@app.delete("/transacciones/{id}")
+def eliminar_transaccion(id: int):
+    transaccion_a_eliminar = None
+
+    for transaccion in lista_transacciones:
+        if transaccion.id == id:
+            transaccion_a_eliminar = transaccion
+            lista_transacciones.remove(transaccion)
+            break
+            
+    if not transaccion_a_eliminar:
+        raise HTTPException(status_code=404, detail="Transacción no encontrada para eliminar")
+    
+    for factura in lista_facturas:
+        if factura.id == transaccion_a_eliminar.factura_id:
+            for t_factura in factura.transacciones:
+                if t_factura.id == id:
+                    factura.transacciones.remove(t_factura)
+                    break
+            break
+            
+    return {"mensaje": "La transacción ha sido eliminada", "transaccion": transaccion_a_eliminar}
+
