@@ -136,7 +136,7 @@ async def creartransaccion(
     
     #excepciones
     if not cliente_encontrado:
-        raise FastAPI.HTTPException(status_code=400,
+        raise HTTPException(status_code=400,
                             detail=f"Error 400: No esiste in cliente con ese id: {cliente_id}, debes de crear un cliente.")
     #Consultar la factura
     factira_encontrada= None
