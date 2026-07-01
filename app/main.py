@@ -1,5 +1,5 @@
 from datetime import datetime
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
 from modelos.clientes import Cliente, ClienteCrear, ClienteEditar, ClienteEliminar
 from modelos.factura import Factura, FacturaCrear, FacturaEditar, FacturaBase
 from modelos.Transacciones import Transacciones, TransaccionesCrear, TransaccionesEditar, TransaccionesaBase
@@ -10,6 +10,24 @@ lista_clientes:list[Cliente] = []
 lista_facturas:list[Factura] = []
 lista_transacciones:list[Transacciones] = []
 
+#endpoint para obtener o listar todos los clientes
+@app.get("/Clientes", response_model=list[Cliente])
+async def listar_clientes():
+    #Creacion de sms mas adecuado al usuario
+        return {"Clientes": lista_clientes}
+
+#Aqui es buscar, con el id, permite buscar un resgistro específico 
+@app.get("/Clientes{cliente_id}", response_model=Cliente)
+async def listar_cliente(cliente_id:int):
+    #recorre la lista de clientes
+    for i, obj_cliente in enumerate(lista_clientes):
+        if obj_cliente.id == cliente_id:
+            return obj_cliente
+        raise HTTPException(
+            status_code=400, detail=f"El cliente con id {cliente_id}, no existe"
+        )
+
+#endpoint para crear un cliente y agregar a la lista
 @app.post("/Clientes", response_model=Cliente)
 async def crear_cliente(datos_cliente:ClienteCrear):
     cliente_val=Cliente.model_validate(datos_cliente.model_dump())
@@ -17,34 +35,32 @@ async def crear_cliente(datos_cliente:ClienteCrear):
     lista_clientes.append(cliente_val)
     return cliente_val
 
-@app.get("/Clientes")
-async def listar_clientes():
-    #Creacion de sms mas adecuado al usuario
-        return {"Clientes": lista_clientes}
 
-@app.put("/Clientes/{id}")
-def Editar_cliente(id: int, datos_cliente:ClienteEditar):
+#endpoint para editar un cliente y agregarlo a la lista
+@app.patch("/Clientes/{cliente_id}", response_model=Cliente)
+async def Editar_cliente(cliente_id:int, datos_cliente:ClienteEditar):
     for i, obj_cliente in enumerate(lista_clientes):
-        if obj_cliente.id == id:
+        if obj_cliente.id == cliente_id:
+            #validar el cliente
             cliente_val= Cliente.model_validate(datos_cliente.model_dump())
-            cliente_val.id = id
+            cliente_val.id = cliente_id
             lista_clientes[i] = cliente_val
         return {"MENSAJE": "Se edito el cliente satisfactoriamente", "Cliente": cliente_val}
+    raise HTTPException(
+        status_code=400, detail=f"El cliente con id {cliente_id}, no existe"
+    )
     
-#Aqui es buscar, con el id, permite buscar un resgistro específico 
-@app.get("/Clientes{id}")
-async def Buscar_cliente(id:int):
-    #Creacion de sms mas adecuado al usuario
-    for cliente in lista_clientes:
-        if cliente.id == id:
-            return cliente
 
-@app.delete("/Clientes")
-def Eliminar_cliente(id:int, datos_cliente:ClienteEliminar):
+#endpoint eliminar cliente
+@app.delete("/Clientes/{cliente_id}", response_model=Cliente)
+async def Eliminar_cliente(cliente_id:int):
     for i, obj_cliente in enumerate(lista_clientes):
-        if obj_cliente.id == id:
-            lista_clientes.pop(i)
-    return {"Cliente": "Cliente eliminado","cliente":obj_cliente}
+        if obj_cliente.id == cliente_id:
+            cliente_eliminado = lista_clientes.pop(i)
+            return {"Cliente": "Cliente eliminado"}
+    raise HTTPException(
+        status_code=400, detail=f"El cliente con id {cliente_id}, no existe."
+    )
 
 
 
@@ -53,25 +69,51 @@ def Eliminar_cliente(id:int, datos_cliente:ClienteEliminar):
 def listar_facturas():
     return lista_facturas
 
-@app.post("/facturas", response_model=Factura)
-def crear_factura(cliente_id: int ,datos_factura: FacturaCrear):
+@app.get("/facturas/{factura_id}", response_model=Factura)
+async def listar_factura(factura_id:int):
+    #se recorre la lista de facturas
+    for i, obj_factura in enumerate(lista_facturas):
+        if obj_factura.id == factura_id:
+            return obj_factura
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=f"La factura con id {factura_id}, no existe"
+    )
+
+
+@app.post("/facturas/{cliente_id}", response_model=Factura)
+async def crear_factura(cliente_id: int ,datos_factura: FacturaCrear):
+    #Buscar el cliente
     cliente_encontrado = None
     cliente_encontrado = [c for c in lista_clientes if c.id == cliente_id]
     
+    #mensaje cuando el cliente no existe
     if not cliente_encontrado:
-        raise HTTPException(satus_code=404, detail=f"Cliente con id {cliente_id} no existe, debes crear.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cliente con id {cliente_id} no existe, debes crear."
+            )
+    
 
-#crear la factura
+
+#validar datos de la factura
     factura_val = Factura.model_validate(datos_factura.model_dump())
+    factura_val.cliente = cliente_encontrado
+    #id de la factura
     factura_val.id = len(lista_facturas) + 1
     factura_val.fecha = datetime.now()
     lista_facturas.append(factura_val)
     return factura_val
 
+
 #enpoint de transacciones
 @app.get("/transacciones", response_model=list[Transacciones])
 async def listar_transacciones():
     return lista_transacciones
+
+@app.get("/transacciones/{factura_id}", response_model=Transacciones)
+async def listar_transacciones (factura_id: int, datos_transaccion: TransaccionesCrear):
+    pass
 
 @app.post("/transacciones/{factura.id}")
 async def creartransaccion( 
@@ -137,4 +179,12 @@ async def creartransaccion(
         lista_transacciones.append(transaccion_val)
 
         return {"mensaje": f"Factura no existe con el id:{factura_id}, pero se creo la nueva factura, Factura: {factura_val.id}" }
+    
+@app.patch("/transacciones/{id_transaccion}", response_model=Transacciones)
+async def editar_transacciones (id_trasaccion: int, datos_transaccion: Transacciones):
+    pass
+
+@app.delete("/transacciones/{id_transaccion}", response_model=Transacciones)
+async def eliminar_transacciones (id_trasaccion: int):
+    pass
 
