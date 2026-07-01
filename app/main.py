@@ -1,8 +1,8 @@
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, status
-from modelos.clientes import Cliente, ClienteCrear, ClienteEditar, ClienteEliminar
-from modelos.factura import Factura, FacturaCrear, FacturaEditar, FacturaBase
-from modelos.Transacciones import Transacciones, TransaccionesCrear, TransaccionesEditar, TransaccionesaBase
+from app.modelos.clientes import Cliente, ClienteCrear, ClienteEditar, ClienteEliminar
+from app.modelos.factura import Factura, FacturaCrear, FacturaEditar
+from app.modelos.Transacciones import Transacciones, TransaccionesCrear, TransaccionesEditar
 app= FastAPI()
 
 #Lista de clientes en BD
@@ -52,7 +52,7 @@ async def Editar_cliente(cliente_id:int, datos_cliente:ClienteEditar):
     
 
 #endpoint eliminar cliente
-@app.delete("/Clientes/{cliente_id}", response_model=Cliente)
+@app.delete("/Clientes/{cliente_id}", response_model=ClienteEliminar)
 async def Eliminar_cliente(cliente_id:int):
     for i, obj_cliente in enumerate(lista_clientes):
         if obj_cliente.id == cliente_id:
@@ -116,7 +116,7 @@ async def listar_transacciones (factura_id: int, datos_transaccion: Transaccione
     pass
 
 @app.post("/transacciones/{factura.id}")
-async def creartransaccion( 
+async def crear_transaccion( 
     factura_id: int,
     datos_transaacion: TransaccionesCrear,
     cliente_id: int
@@ -181,7 +181,7 @@ async def creartransaccion(
         return {"mensaje": f"Factura no existe con el id:{factura_id}, pero se creo la nueva factura, Factura: {factura_val.id}" }
     
 @app.patch("/transacciones/{id_transaccion}", response_model=Transacciones)
-async def editar_transacciones (id_trasaccion: int, datos_transaccion: Transacciones):
+async def editar_transacciones (id_transaccion: int, datos_transaccion: Transacciones):
     pass
 
 @app.delete("/transacciones/{id_transaccion}", response_model=Transacciones)

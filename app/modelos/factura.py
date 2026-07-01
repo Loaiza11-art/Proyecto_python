@@ -1,7 +1,7 @@
 from pydantic import BaseModel, computed_field
 
-from modelos.clientes import Cliente
-from modelos.Transacciones import Transacciones
+from app.modelos.clientes import Cliente
+from app.modelos.Transacciones import Transacciones
 class FacturaBase(BaseModel):
     #atributos
     fecha: int
